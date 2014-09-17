@@ -1,5 +1,9 @@
 package com.ericsson.research;
 
+import com.ericsson.research.dataset.Datapoint;
+import com.ericsson.research.dataset.Location;
+import com.ericsson.research.dataset.Query;
+import com.ericsson.research.dataset.Stream;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.ProxyServer;
 import com.rabbitmq.client.*;
@@ -19,23 +23,20 @@ public class IoTFrameworkEndpoint {
     private ProxyServer proxyServer = null;
     private final AsyncHandler handler = new AsyncHandler();
     private final Connection connection;
-    private final String userId;
 
-    public IoTFrameworkEndpoint(String HostName, String UserId) throws IOException {
+    public IoTFrameworkEndpoint(String HostName) throws IOException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HostName); // listening on port 5672
         connection = factory.newConnection();
-        userId = UserId;
 
         apiUrl = "http://" + HostName + ":8000";
         httpClient = new AsyncHttpClient();
     }
 
-    public IoTFrameworkEndpoint(String HostName, String ProxyServer, int Port, String UserId) throws IOException {
+    public IoTFrameworkEndpoint(String HostName, String ProxyServer, int Port) throws IOException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HostName); // listening on port 5672
         connection = factory.newConnection();
-        userId = UserId;
         apiUrl = "http:// " + HostName + ":8000";
         httpClient = new AsyncHttpClient();
         proxyServer = new ProxyServer(ProxyServer, Port);
@@ -51,13 +52,8 @@ public class IoTFrameworkEndpoint {
         return null;
     }
 
-    public String createStream(String uuid, String name, String description, String tags, String location) throws IOException, ExecutionException, InterruptedException {
-        AsyncHttpClient.BoundRequestBuilder request = buildCreateStreamRequest(uuid, name, description, tags, location);
-        return request.execute().get().getResponseBody();
-    }
-
-    public String createStream(String uuid, String name, String description, String type, String tags, String unit, String location) throws IOException, ExecutionException, InterruptedException {
-        AsyncHttpClient.BoundRequestBuilder request = buildCreateStreamRequest(uuid, name, description, type, tags, unit, location);
+    public String createStream(Stream stream) throws IOException, ExecutionException, InterruptedException {
+        AsyncHttpClient.BoundRequestBuilder request = buildCreateStreamRequest(stream);
         return request.execute().get().getResponseBody();
     }
 
@@ -68,8 +64,7 @@ public class IoTFrameworkEndpoint {
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
 
-        String result = request.execute().get().getResponseBody();
-        return result;
+        return request.execute().get().getResponseBody();
     }
 
     public String getLocationFromFreeIP( String ipAddress ) throws IOException, ExecutionException, InterruptedException {
@@ -85,32 +80,13 @@ public class IoTFrameworkEndpoint {
         String latitude = location.substring(indexOf, location.indexOf(",\"longitude\":"));
         indexOf = location.indexOf("\"longitude\":")+12;
         String longitude = location.substring(indexOf, location.indexOf(",\"metro_code\":" ));
-        return "\"location\":{\"lat\":" + latitude + ",\"lon\":" + longitude + "}";
+        return new Location(latitude, longitude).toJsonString();
     }
 
-    private AsyncHttpClient.BoundRequestBuilder buildCreateStreamRequest(String uuid, String name, String description, String tags, String location) throws IOException {
+    private AsyncHttpClient.BoundRequestBuilder buildCreateStreamRequest(Stream stream) throws IOException {
         String url = apiUrl + "/streams/";
-        String payload = "{\"data_type\":\"application/json\",\"description\":\"" + description + "\"," + location + "," +
-                "\"name\":\"" + name + "\",\"parser\":\"\",\"polling\":false,\"polling_freq\":0,\"private\":false," +
-                "\"resource\":{\"resource_type\":\"\",\"uuid\":\"" + uuid + "\"},\"tags\":\"" + tags + "\"," +
-                "\"uri\":\"\",\"user_id\":\"" + userId + "\"}";
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody(payload).setHeader("Content-type", "application/json");
-
-        if (proxyServer != null)
-            request.setProxyServer(proxyServer);
-
-        return request;
-    }
-
-    private AsyncHttpClient.BoundRequestBuilder buildCreateStreamRequest(String uuid, String name, String description, String type, String tags, String unit, String location) throws IOException {
-        String url = apiUrl + "/streams/";
-        String payload = "{\"data_type\":\"application/json\",\"description\":\"" + description + "\"," + location + "," +
-                "\"name\":\"" + name + "\",\"parser\":\"\",\"polling\":false,\"polling_freq\":0,\"private\":false," +
-                "\"resource\":{\"resource_type\":\"\",\"uuid\":\"" + uuid + "\"},\"tags\":\"" + tags + "\"," +
-                "\"type\":\"" + type + "\",\"unit\":\"" + unit + "\",\"uri\":\"\",\"user_id\":\"" + userId + "\"}";
-        AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody(payload).setHeader("Content-type", "application/json");
+                setBody(stream.toJsonString()).setHeader("Content-type", "application/json");
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
@@ -151,11 +127,10 @@ public class IoTFrameworkEndpoint {
         return results.toArray(new String[]{});
     }
 
-    private AsyncHttpClient.BoundRequestBuilder buildSearchPostRequest(String Query) {
+    private AsyncHttpClient.BoundRequestBuilder buildSearchPostRequest(String query) {
         String url = apiUrl + "/streams/_search";
-        String payload = "{\"query\" : { \"query_string\" : {\"query\" : \"" + Query + "\"}}}";
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody(payload).setHeader("Content-type", "application/json");
+                setBody((new Query(query)).toJsonString()).setHeader("Content-type", "application/json");
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
@@ -165,9 +140,8 @@ public class IoTFrameworkEndpoint {
 
     private AsyncHttpClient.BoundRequestBuilder buildDataPointPostRequest(String streamId, float value) {
         String url = apiUrl + "/streams/" + streamId + "/data";
-        String payload = "{\"value\":" + value + "}";
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody(payload).setHeader("Content-type", "application/json");
+                setBody((new Datapoint(value)).toJsonString()).setHeader("Content-type", "application/json");
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
