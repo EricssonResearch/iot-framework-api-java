@@ -18,8 +18,4 @@ public class Datapoint {
     public float getValue() {
         return value;
     }
-
-    public String toJsonString() {
-        return "{\"value\":" + value + "}";
-    }
 }

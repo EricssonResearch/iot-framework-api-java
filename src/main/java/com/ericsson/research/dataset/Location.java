@@ -5,32 +5,28 @@ package com.ericsson.research.dataset;
  */
 public class Location {
 
-    private String latitude;
-    private String longitude;
+    private String lat;
+    private String lon;
 
     public Location( String Latitude, String Longitude ) {
-        latitude = Latitude;
-        longitude = Longitude;
+        lat = Latitude;
+        lon = Longitude;
     }
 
     public String getLatitude() {
-        return latitude;
+        return lat;
     }
 
     public String getLongitude() {
-        return longitude;
+        return lon;
     }
 
-    public void setLatitude(String Latitude) {
-        latitude = Latitude;
+    public Location setLatitude(String Latitude) {
+        lat = Latitude; return this;
     }
 
-    public void setLongitude(String Longitude) {
-        longitude = Longitude;
-    }
-
-    public String toJsonString() {
-        return "\"location\":{\"lat\":" + latitude + ",\"lon\":" + longitude + "}";
+    public Location setLongitude(String Longitude) {
+        lon = Longitude; return this;
     }
 
 }

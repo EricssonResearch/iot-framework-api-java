@@ -1,18 +1,12 @@
 package com.ericsson.research;
 
-import com.ericsson.research.dataset.Datapoint;
-import com.ericsson.research.dataset.Location;
-import com.ericsson.research.dataset.Query;
-import com.ericsson.research.dataset.Stream;
+import com.ericsson.research.dataset.*;
+import com.google.gson.Gson;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.ProxyServer;
 import com.rabbitmq.client.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 
@@ -23,6 +17,10 @@ public class IoTFrameworkEndpoint {
     private ProxyServer proxyServer = null;
     private final AsyncHandler handler = new AsyncHandler();
     private final Connection connection;
+    private final Gson gson = new Gson();
+
+    private final String ContentType = "Content-Type";
+    private final String jsonPayload = "application/json";
 
     public IoTFrameworkEndpoint(String HostName) throws IOException {
         ConnectionFactory factory = new ConnectionFactory();
@@ -47,9 +45,22 @@ public class IoTFrameworkEndpoint {
         connection.close();
     }
 
-    // TODO - The point with this function is to receive a resource Id as input and to produce a set of streams as input that already contain the metadata required
-    public String createStreamsForResource(String ResourceId) {
-        return null;
+    public Resource[] getResources(String query) throws IOException, ExecutionException, InterruptedException {
+        AsyncHttpClient.BoundRequestBuilder request = buildSearchResourcePostRequest(query);
+        String result = request.execute().get().getResponseBody();
+
+        String substring = result.substring( result.indexOf("\"hits\":[") + 7, result.lastIndexOf("]")+1 );
+        Hits[] hits = gson.fromJson(substring, Hits[].class);
+        Vector<Resource> resources = new Vector<Resource>();
+
+        for ( Hits hit : hits ) {
+            for ( Stream stream : hit.getResource().getSuggestedStreams()) {
+                stream.setResourceType(new ResourceType(hit.getId(), ""));
+            }
+            resources.add(hit.getResource());
+        }
+
+        return resources.toArray(new Resource[hits.length]);
     }
 
     public String createStream(Stream stream) throws IOException, ExecutionException, InterruptedException {
@@ -67,7 +78,7 @@ public class IoTFrameworkEndpoint {
         return request.execute().get().getResponseBody();
     }
 
-    public String getLocationFromFreeIP( String ipAddress ) throws IOException, ExecutionException, InterruptedException {
+    public Location getLocationFromFreeIP( String ipAddress ) throws IOException, ExecutionException, InterruptedException {
         String url = "http://freegeoip.net/json/"+ipAddress;
         AsyncHttpClient.BoundRequestBuilder request = httpClient.prepareGet(url);
 
@@ -80,13 +91,14 @@ public class IoTFrameworkEndpoint {
         String latitude = location.substring(indexOf, location.indexOf(",\"longitude\":"));
         indexOf = location.indexOf("\"longitude\":")+12;
         String longitude = location.substring(indexOf, location.indexOf(",\"metro_code\":" ));
-        return new Location(latitude, longitude).toJsonString();
+        return new Location(latitude, longitude);
     }
 
     private AsyncHttpClient.BoundRequestBuilder buildCreateStreamRequest(Stream stream) throws IOException {
         String url = apiUrl + "/streams/";
+        String json = gson.toJson(stream);
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody(stream.toJsonString()).setHeader("Content-type", "application/json");
+                setBody(json).setHeader(ContentType, jsonPayload);
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
@@ -105,7 +117,7 @@ public class IoTFrameworkEndpoint {
     }
 
     public String[] getStreamIdsForQuery(String Query) throws IOException, ExecutionException, InterruptedException {
-        AsyncHttpClient.BoundRequestBuilder request = buildSearchPostRequest(Query);
+        AsyncHttpClient.BoundRequestBuilder request = buildSearchStreamPostRequest(Query);
         String result = request.execute().get().getResponseBody();
         String[] ids = processSearchResult(result);
         return ids;
@@ -124,13 +136,24 @@ public class IoTFrameworkEndpoint {
         for (Integer t : indexes) {
             results.add(result.substring(t + 7, result.indexOf("\",\"", t + 7)));
         }
-        return results.toArray(new String[]{});
+        return results.toArray(new String[results.size()]);
     }
 
-    private AsyncHttpClient.BoundRequestBuilder buildSearchPostRequest(String query) {
+    private AsyncHttpClient.BoundRequestBuilder buildSearchStreamPostRequest(String query) {
         String url = apiUrl + "/streams/_search";
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody((new Query(query)).toJsonString()).setHeader("Content-type", "application/json");
+                setBody((new Query(query)).toJsonString()).setHeader(ContentType, jsonPayload);
+
+        if (proxyServer != null)
+            request.setProxyServer(proxyServer);
+
+        return request;
+    }
+
+    private AsyncHttpClient.BoundRequestBuilder buildSearchResourcePostRequest(String query) {
+        String url = apiUrl + "/resources/_search";
+        AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
+                setBody((new Query(query)).toJsonString()).setHeader(ContentType, jsonPayload);
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
@@ -141,7 +164,7 @@ public class IoTFrameworkEndpoint {
     private AsyncHttpClient.BoundRequestBuilder buildDataPointPostRequest(String streamId, float value) {
         String url = apiUrl + "/streams/" + streamId + "/data";
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
-                setBody((new Datapoint(value)).toJsonString()).setHeader("Content-type", "application/json");
+                setBody(gson.toJson(new Datapoint(value))).setHeader(ContentType, jsonPayload);
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);

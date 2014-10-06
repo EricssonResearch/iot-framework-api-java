@@ -1,44 +1,53 @@
 package com.ericsson.research.dataset;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by Konstantinos Vandikas on 17/09/14.
  */
 public class Stream {
 
     private String description;
-    private String location;
+    private Location location;
     private String name;
-    private Boolean privacy;
-    private String uuid;
+    @SerializedName("private") private boolean privacy; // this needs to be renamed to private somehow
+    private ResourceType resource;
     private String tags;
     private String type;
     private String unit;
-    private String userId;
     private String accuracy;
     private String max_val;
     private String min_val;
+    private String data_type;
+    private boolean polling;
+    private String parser;
+    private float polling_freq;
+    private String user_id;
 
-    public Stream(String Uuid, String Name, String Description, String Type, String Tags, String Unit, String Location, String UserId) {
-        uuid = Uuid;
+    public Stream(String Uuid, String Name, String Description, String Type, String Tags, String Unit, Location Location, String UserId) {
+        data_type = "application\\json";
+        resource = new ResourceType("", Uuid);
         name = Name;
         description = Description;
         type = Type;
         tags = Tags;
         unit = Unit;
         location = Location;
-        userId = UserId;
+        user_id = UserId;
     }
 
-    public Stream( String Uuid, String Name, String Description, String Location, String UserId) {
-        uuid = Uuid;
+    public Stream( String Uuid, String Name, String Description, Location Location, String UserId) {
+        data_type = "application\\json";
+        resource = new ResourceType("", Uuid);
         name = Name;
         description = Description;
         location = Location;
-        userId = UserId;
+        user_id = UserId;
     }
 
-    public void setPrivacy(Boolean Privacy) {
+    public Stream setPrivacy(Boolean Privacy) {
         privacy = Privacy;
+        return this;
     }
 
     public Boolean getPrivacy() {
@@ -49,95 +58,112 @@ public class Stream {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Stream setDescription(String description) {
         this.description = description;
+        return this;
     }
 
-    public String getLocation() {
+    public Location getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public Stream setLocation(Location location) {
         this.location = location;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public Stream setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getUuid() {
-        return uuid;
+        return resource.getUuid();
     }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
+    public Stream setUuid(String uuid) {
+        resource.setUuid(uuid);
+        return this;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public Stream setType(String type) {
         this.type = type;
+        return this;
     }
 
     public String getUserId() {
-        return userId;
+        return user_id;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public Stream setUserId(String userId) {
+        this.user_id = userId;
+        return this;
     }
 
     public String getAccuracy() {
         return accuracy;
     }
 
-    public void setAccuracy(String accuracy) {
+    public Stream setAccuracy(String accuracy) {
         this.accuracy = accuracy;
+        return this;
     }
 
     public String getMin_val() {
         return min_val;
     }
 
-    public void setMin_val(String min_val) {
-        this.min_val = min_val;
+    public Stream setMin_val(String min_val) {
+        this.min_val = min_val; return this;
     }
 
     public String getMax_val() {
         return max_val;
     }
 
-    public void setMax_val(String max_val) {
-        this.max_val = max_val;
+    public Stream setMax_val(String max_val) {
+        this.max_val = max_val; return this;
     }
 
     public String getUnit() {
         return unit;
     }
 
-    public void setUnit(String unit) {
+    public Stream setUnit(String unit) {
         this.unit = unit;
+        return this;
     }
 
     public String getTags() {
         return tags;
     }
 
-    public void setTags(String tags) {
-        this.tags = tags;
+    public Stream setTags(String tags) {
+        this.tags = tags; return this;
     }
 
-    // remember to add min and max here
-    public String toJsonString() {
-        return "{\"accuracy\":\"" + accuracy + "\" \"data_type\":\"application/json\",\"description\":\"" + description + "\"," + location + "," +
-                "\"name\":\"" + name + "\",\"max_val\":\"" + max_val + "\",\"min_val\":\"" + min_val + "\",\"parser\":\"\",\"polling\":false,\"polling_freq\":0,\"private\":" + privacy.toString() + "," +
-                "\"resource\":{\"resource_type\":\"\",\"uuid\":\"" + uuid + "\"},\"tags\":\"" + tags + "\"," +
-                "\"type\":\"" + type + "\",\"unit\":\"" + unit + "\",\"uri\":\"\",\"user_id\":\"" + userId + "\"}";
+    public Stream setResourceType( ResourceType resourceType ) {
+        this.resource = resourceType;
+        return this;
     }
+
+    public Stream setDataType( String data_type ) {
+        this.data_type = data_type;
+        return this;
+    }
+
+    /*public String toJsonString() {
+        return "{\"accuracy\":\"" + accuracy + "\" \"data_type\":\"" + data_type + "\",\"description\":\"" + description + "\"," + location + "," +
+                "\"name\":\"" + name + "\",\"max_val\":\"" + max_val + "\",\"min_val\":\"" + min_val + "\",\"parser\":\"" + parser + "\",\"polling\":" + Boolean.toString(polling) + ",\"polling_freq\":" + polling_freq + ",\"private\":" + Boolean.toString(privacy) + "," +
+                "\"resource\":{\"resource_type\":\"" + resource_type + "\",\"uuid\":\"" + uuid + "\"},\"tags\":\"" + tags + "\"," +
+                "\"type\":\"" + type + "\",\"unit\":\"" + unit + "\",\"uri\":\"\",\"user_id\":\"" + userId + "\"}";
+    }*/
 }
