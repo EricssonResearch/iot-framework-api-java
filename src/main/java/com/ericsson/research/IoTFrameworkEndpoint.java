@@ -63,9 +63,10 @@ public class IoTFrameworkEndpoint {
         return resources.toArray(new Resource[hits.length]);
     }
 
-    public String createStream(Stream stream) throws IOException, ExecutionException, InterruptedException {
+    public StreamCreationResponse createStream(Stream stream) throws IOException, ExecutionException, InterruptedException {
         AsyncHttpClient.BoundRequestBuilder request = buildCreateStreamRequest(stream);
-        return request.execute().get().getResponseBody();
+        String response = request.execute().get().getResponseBody();
+        return gson.fromJson(response, StreamCreationResponse.class );
     }
 
     public String deleteStream(String streamId) throws IOException, ExecutionException, InterruptedException {
