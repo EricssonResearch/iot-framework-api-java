@@ -1,9 +1,4 @@
-package com.ericsson.research;
-
-import com.ning.http.client.HttpResponseBodyPart;
-import com.ning.http.client.HttpResponseHeaders;
-import com.ning.http.client.HttpResponseStatus;
-import org.apache.log4j.Logger;
+package com.ericsson.research.dataset;
 
 /*
  * ##_BEGIN_LICENSE_##
@@ -38,36 +33,31 @@ import org.apache.log4j.Logger;
  * ##_END_LICENSE_##
  */
 
-public class AsyncHandler implements com.ning.http.client.AsyncHandler<String> {
+public class ESCreatedResponse {
 
-    private static final Logger logger = Logger.getLogger(AsyncHandler.class);
+    private String _index;
+    private String _type;
+    private String _id;
+    private String _version;
+    private boolean created;
 
-    @Override
-    public void onThrowable(Throwable throwable) {
-        logger.error(throwable);
+    public String getId() {
+        return _id;
     }
 
-    @Override
-    public STATE onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-        return STATE.CONTINUE;
+    public boolean getCreated() {
+        return created;
     }
 
-    @Override
-    public STATE onStatusReceived(HttpResponseStatus httpResponseStatus) throws Exception {
-        if (httpResponseStatus.getStatusCode() != 200) {
-            logger.error("Http status was " + httpResponseStatus.getStatusCode());
-        }
-
-        return STATE.CONTINUE;
+    public String getIndex() {
+        return _index;
     }
 
-    @Override
-    public STATE onHeadersReceived(HttpResponseHeaders httpResponseHeaders) throws Exception {
-        return STATE.CONTINUE;
+    public String getType() {
+        return _type;
     }
 
-    @Override
-    public String onCompleted() throws Exception {
-        return null;
+    public String getVersion() {
+        return _version;
     }
 }

@@ -1,12 +1,4 @@
-package com.ericsson.research;
-
-import com.ning.http.client.HttpResponseBodyPart;
-import com.ning.http.client.HttpResponseHeaders;
-import com.ning.http.client.HttpResponseStatus;
-import org.apache.log4j.Logger;
-
 /*
- * ##_BEGIN_LICENSE_##
  * IoT-Framework API Java
  * ----------
  * Copyright (C) 2014 Ericsson AB
@@ -15,7 +7,7 @@ import org.apache.log4j.Logger;
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *     list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -35,39 +27,35 @@ import org.apache.log4j.Logger;
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ##_END_LICENSE_##
  */
 
-public class AsyncHandler implements com.ning.http.client.AsyncHandler<String> {
+package com.ericsson.research.dataset;
 
-    private static final Logger logger = Logger.getLogger(AsyncHandler.class);
+public class ESFoundResponse {
 
-    @Override
-    public void onThrowable(Throwable throwable) {
-        logger.error(throwable);
+    private String _index;
+    private String _type;
+    private String _id;
+    private String _version;
+    private boolean found;
+
+    public String getId() {
+        return _id;
     }
 
-    @Override
-    public STATE onBodyPartReceived(HttpResponseBodyPart httpResponseBodyPart) throws Exception {
-        return STATE.CONTINUE;
+    public boolean found() {
+        return found;
     }
 
-    @Override
-    public STATE onStatusReceived(HttpResponseStatus httpResponseStatus) throws Exception {
-        if (httpResponseStatus.getStatusCode() != 200) {
-            logger.error("Http status was " + httpResponseStatus.getStatusCode());
-        }
-
-        return STATE.CONTINUE;
+    public String getIndex() {
+        return _index;
     }
 
-    @Override
-    public STATE onHeadersReceived(HttpResponseHeaders httpResponseHeaders) throws Exception {
-        return STATE.CONTINUE;
+    public String getType() {
+        return _type;
     }
 
-    @Override
-    public String onCompleted() throws Exception {
-        return null;
+    public String getVersion() {
+        return _version;
     }
 }
