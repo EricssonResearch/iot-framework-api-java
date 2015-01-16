@@ -1,6 +1,6 @@
 import com.ericsson.research.IoTFrameworkEndpoint;
+import com.ericsson.research.dataset.ESCreatedResponse;
 import com.ericsson.research.dataset.ESFoundResponse;
-import com.ericsson.research.dataset.ESResponse;
 import com.ericsson.research.dataset.Location;
 import com.ericsson.research.dataset.Stream;
 import com.ericsson.research.errors.MalformedJsonResponse;
@@ -70,7 +70,7 @@ public class TestEndpointMock {
         IoTFrameworkEndpoint endpoint = new IoTFrameworkEndpoint(hostName, userId, accessToken);
 
         try {
-            ESResponse response = endpoint.postDatapoint(streamId, 1f);
+            ESCreatedResponse response = endpoint.postDatapoint(streamId, 1f);
             assertEquals( response.getId(), "IoD1M0zVSA6LNpvNM2v1rg");
         } catch (IOException e) {
             e.printStackTrace();
@@ -138,7 +138,7 @@ public class TestEndpointMock {
         Stream stream = new Stream("123","mystream","this is a description", location);
 
         try {
-            ESResponse result = endpoint.createStream(stream);
+            ESCreatedResponse result = endpoint.createStream(stream);
             assertEquals(result.getId(), id);
         } catch (ExecutionException e) {
             e.printStackTrace();
