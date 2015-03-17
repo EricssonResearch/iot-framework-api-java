@@ -2,6 +2,7 @@ package com.ericsson.research;
 
 import com.ericsson.research.dataset.*;
 import com.ericsson.research.errors.MalformedJsonResponse;
+import com.ericsson.research.errors.StreamNotFound;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -55,7 +56,7 @@ public class IoTFrameworkEndpoint {
     private final AsyncHandler handler = new AsyncHandler();
 //    private Connection connection;
     private final Gson gson = new Gson();
-    private final String accessToken;
+    private String accessToken;
     private final String userId;
 
     private final String ContentTypeHeader = "Content-Type";
@@ -69,6 +70,18 @@ public class IoTFrameworkEndpoint {
      * IoT Framework end point constructor without proxy
      * @param HostName the host name for the iot framework, assumes that default port is 8000
      * @param UserId the user's id
+     * @throws IOException
+     */
+    public IoTFrameworkEndpoint(String HostName, String UserId) throws IOException {
+        apiUrl = "http://" + HostName + ":8000";
+        httpClient = new AsyncHttpClient();
+        userId = UserId;
+    }
+
+    /**
+     * IoT Framework end point constructor without proxy
+     * @param HostName the host name for the iot framework, assumes that default port is 8000
+     * @param UserId the user's id
      * @param AccessToken the access token for authenticating usage of the iot framework
      * @throws IOException
      */
@@ -76,6 +89,24 @@ public class IoTFrameworkEndpoint {
         apiUrl = "http://" + HostName + ":8000";
         accessToken = AccessToken;
         httpClient = new AsyncHttpClient();
+        userId = UserId;
+    }
+
+    /**
+     * IoT Framework end point constructor with proxy
+     * @param HostName the host name for the iot framework, assumes that default port is 8000
+     * @param UserId the user's id
+     * @param ProxyServer the http proxy server for making http requests
+     * @param Port the port of the http proxy server
+     * @throws IOException
+     */
+    public IoTFrameworkEndpoint(String HostName, String UserId, String ProxyServer, int Port) throws IOException {
+        //ConnectionFactory factory = new ConnectionFactory();
+        //factory.setHost(HostName); // listening on port 5672
+        //connection = factory.newConnection();
+        apiUrl = "http:// " + HostName + ":8000";
+        httpClient = new AsyncHttpClient();
+        proxyServer = new ProxyServer(ProxyServer, Port);
         userId = UserId;
     }
 
@@ -105,7 +136,7 @@ public class IoTFrameworkEndpoint {
     }
 
     private String getUserId() {
-        return ""; //implement a function that return the user id
+        return ""; //implement a function that returns the user id
     }
 
     public Resource[] getResources(String Query) throws IOException, ExecutionException, InterruptedException, MalformedJsonResponse {
@@ -167,9 +198,14 @@ public class IoTFrameworkEndpoint {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public ESCreatedResponse postDatapoint(String streamId, float value) throws IOException, ExecutionException, InterruptedException {
+    public ESCreatedResponse postDatapoint(String streamId, float value) throws IOException, ExecutionException, InterruptedException, StreamNotFound {
         AsyncHttpClient.BoundRequestBuilder request = buildDataPointPostRequest(streamId, value);
         String response = request.execute().get().getResponseBody();
+
+        if ( response.contains("no document with streamid")) {
+            throw new StreamNotFound(response);
+        }
+
         return gson.fromJson(response, ESCreatedResponse.class);
     }
 
@@ -245,8 +281,10 @@ public class IoTFrameworkEndpoint {
     private AsyncHttpClient.BoundRequestBuilder buildPostRequest(String url, String jsonPayload) {
         AsyncHttpClient.BoundRequestBuilder request = httpClient.preparePost(url).
                 setBody(jsonPayload).
-                setHeader(ContentTypeHeader, jsonPayloadConst).
-                setHeader(AccessTokenHeader, accessToken);
+                setHeader(ContentTypeHeader, jsonPayloadConst);
+
+        if ( accessToken != null && !accessToken.isEmpty())
+            request.setHeader(AccessTokenHeader, accessToken);
 
         if (proxyServer != null)
             request.setProxyServer(proxyServer);
