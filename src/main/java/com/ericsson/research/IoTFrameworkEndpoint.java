@@ -54,10 +54,9 @@ public class IoTFrameworkEndpoint {
     private final String apiUrl;
     private ProxyServer proxyServer = null;
     private final AsyncHandler handler = new AsyncHandler();
-//    private Connection connection;
     private final Gson gson = new Gson();
     private String accessToken;
-    private final String userId;
+    private String userId;
 
     private final String ContentTypeHeader = "Content-Type";
     private final String jsonPayloadConst = "application/json";
@@ -101,9 +100,6 @@ public class IoTFrameworkEndpoint {
      * @throws IOException
      */
     public IoTFrameworkEndpoint(String HostName, String UserId, String ProxyServer, int Port) throws IOException {
-        //ConnectionFactory factory = new ConnectionFactory();
-        //factory.setHost(HostName); // listening on port 5672
-        //connection = factory.newConnection();
         apiUrl = "http:// " + HostName + ":8000";
         httpClient = new AsyncHttpClient();
         proxyServer = new ProxyServer(ProxyServer, Port);
@@ -120,9 +116,6 @@ public class IoTFrameworkEndpoint {
      * @throws IOException
      */
     public IoTFrameworkEndpoint(String HostName, String UserId, String AccessToken, String ProxyServer, int Port) throws IOException {
-        //ConnectionFactory factory = new ConnectionFactory();
-        //factory.setHost(HostName); // listening on port 5672
-        //connection = factory.newConnection();
         accessToken = AccessToken;
         apiUrl = "http:// " + HostName + ":8000";
         httpClient = new AsyncHttpClient();
@@ -132,7 +125,6 @@ public class IoTFrameworkEndpoint {
 
     public void close() throws IOException {
         httpClient.close();
-        //connection.close();
     }
 
     private String getUserId() {
@@ -214,6 +206,11 @@ public class IoTFrameworkEndpoint {
         request.execute(handler);
     }
 
+    // placeholder fix this function
+    public void getSemanticallyAnnotatedData() {
+
+    }
+
     /**
      * getStreamForQuery returns an array of streams that satisfies the input query
      * @param Query the input query
@@ -292,20 +289,20 @@ public class IoTFrameworkEndpoint {
         return request;
     }
 
-    //public getSubscription() {
-    //    ConnectionFactory factory = new ConnectionFactory();
-        //factory.setHost(HostName); // listening on port 5672
-        //connection = factory.newConnection();
+    public void subscribe(String hostName, String StreamId, final DataPointCallback dataPointCallback) throws IOException {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(hostName); // listening on port 5672
 
-//    }
+        Connection connection = factory.newConnection();
 
-    /*public void subscribe(String StreamId, final StringCallback stringCallback) throws IOException {
         final Channel channel = connection.createChannel();
         final String EXCHANGE_NAME = "streams." + StreamId;
 
         channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
         String queueName = channel.queueDeclare().getQueue();
         channel.queueBind(queueName, EXCHANGE_NAME, "");
+
+        dataPointCallback.setConnection(connection);
 
         boolean autoAck = true;
         channel.basicConsume(queueName, autoAck, "myConsumerTag",
@@ -316,11 +313,11 @@ public class IoTFrameworkEndpoint {
                                                AMQP.BasicProperties properties,
                                                byte[] body)
                             throws IOException {
-                        String notification = new String(body);
-                        stringCallback.handleNotification(notification);
+                        DataPointNotification notification = gson.fromJson(new String(body), DataPointNotification.class);
+                        dataPointCallback.handleNotification(notification);
                     }
                 });
-    }*/
+    }
 }
 
 //TODOs
