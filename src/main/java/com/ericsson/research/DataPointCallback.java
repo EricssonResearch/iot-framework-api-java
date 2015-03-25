@@ -1,5 +1,10 @@
 package com.ericsson.research;
 
+import com.ericsson.research.dataset.DataPointNotification;
+import com.rabbitmq.client.Connection;
+
+import java.io.IOException;
+
 /*
  * ##_BEGIN_LICENSE_##
  * IoT-Framework API Java
@@ -32,6 +37,17 @@ package com.ericsson.research;
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ##_END_LICENSE_##
  */
-public abstract class StringCallback {
-    public abstract void handleNotification(String notification);
+public abstract class DataPointCallback {
+
+    private Connection connection;
+
+    public abstract void handleNotification(DataPointNotification notification);
+
+    void setConnection(Connection connection ) {
+        this.connection = connection;
+    }
+
+    public void close() throws IOException {
+        connection.close();
+    }
 }
