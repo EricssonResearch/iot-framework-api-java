@@ -3,6 +3,7 @@ import com.ericsson.research.dataset.ESCreatedResponse;
 import com.ericsson.research.dataset.ESFoundResponse;
 import com.ericsson.research.dataset.Location;
 import com.ericsson.research.dataset.Stream;
+import com.ericsson.research.errors.StreamNotFound;
 import com.ericsson.research.errors.MalformedJsonResponse;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Rule;
@@ -57,7 +58,7 @@ public class TestEndpointMock {
 
     @Test
     // purpose of this test is to mock the successful case of submitting a data point
-    public void testPostDataPoint() throws IOException {
+    public void testPostDataPoint() throws IOException, StreamNotFound {
 
         stubFor(post(urlEqualTo("/streams/" + streamId + "/data"))
                 .withHeader("Content-Type", equalTo("application/json"))
